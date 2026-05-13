@@ -617,7 +617,49 @@ function submitAssessment(){
   }
   document.getElementById("r-recommendations").innerHTML=recHTML;
 
-  // Switch pages
+  // Send to Power Automate / Excel
+  const POWER_AUTOMATE_URL = "https://default520089f3db4446e6b9d7de664be817.19.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/077bf07186a94d8a849644b8a812b67f/triggers/manual/paths/invoke?api-version=1";
+  
+  const payload = {
+    agency: document.getElementById("agency-name").value || "—",
+    dto: document.getElementById("dto-name").value || "—",
+    date: document.getElementById("assess-date").value || new Date().toISOString().split("T")[0],
+    division: document.getElementById("division").value || "—",
+    period: document.getElementById("period").value || "—",
+    reviewer: document.getElementById("reviewer").value || "—",
+    overall_pct: overall,
+    overall_level: LEVEL_NAMES[lvl],
+    strategy_pct: domainData.find(d=>d.id==="strategy")?.pct || 0,
+    governance_pct: domainData.find(d=>d.id==="governance")?.pct || 0,
+    infra_pct: domainData.find(d=>d.id==="infra")?.pct || 0,
+    data_pct: domainData.find(d=>d.id==="data")?.pct || 0,
+    services_pct: domainData.find(d=>d.id==="services")?.pct || 0,
+    people_pct: domainData.find(d=>d.id==="people")?.pct || 0,
+    process_pct: domainData.find(d=>d.id==="process")?.pct || 0,
+    total_gaps: totalGaps,
+    indicators_met: totalDone+"/"+totalItems,
+    domains_l3: domainsAtL3+"/7"
+  };
+
+  // Show saving indicator
+  const submitBtn = document.querySelector(".btn-primary");
+  if(submitBtn){ submitBtn.textContent = "Saving to Excel..."; submitBtn.disabled = true; }
+
+  fetch(POWER_AUTOMATE_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  })
+  .then(res => {
+    console.log("Power Automate response:", res.status);
+    if(submitBtn){ submitBtn.textContent = "Submit & Generate Report"; submitBtn.disabled = false; }
+  })
+  .catch(err => {
+    console.log("Power Automate note:", err);
+    if(submitBtn){ submitBtn.textContent = "Submit & Generate Report"; submitBtn.disabled = false; }
+  });
+
+  // Switch pages regardless of network result
   document.getElementById("assessment-page").classList.remove("active");
   document.getElementById("results-page").classList.add("active");
   window.scrollTo(0,0);
