@@ -617,13 +617,14 @@ function submitAssessment(){
   }
   document.getElementById("r-recommendations").innerHTML=recHTML;
 
-  // Send to Power Automate / Excel
-  const POWER_AUTOMATE_URL = "https://default520089f3db4446e6b9d7de664be817.19.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/077bf07186a94d8a849644b8a812b67f/triggers/manual/paths/invoke?api-version=1";
-  
+  // ── Send to Google Sheets via Apps Script ──
+  const SHEET_ID = "1h6iUeWp7xeNomr909DfI2H58MAEaZyiihxFXBNtP2IA";
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzMnYSQERSD8K21QO8tjMzDuxkm4GpjP_S-6emmZrUH0ItrcfkC0Xs5zQdRh6OEhoybUg/exec";
+
   const payload = {
+    submission_date: new Date().toLocaleDateString("en-GB"),
     agency: document.getElementById("agency-name").value || "—",
     dto: document.getElementById("dto-name").value || "—",
-    date: document.getElementById("assess-date").value || new Date().toISOString().split("T")[0],
     division: document.getElementById("division").value || "—",
     period: document.getElementById("period").value || "—",
     reviewer: document.getElementById("reviewer").value || "—",
@@ -641,25 +642,20 @@ function submitAssessment(){
     domains_l3: domainsAtL3+"/7"
   };
 
-  // Show saving indicator
   const submitBtn = document.querySelector(".btn-primary");
-  if(submitBtn){ submitBtn.textContent = "Saving to Excel..."; submitBtn.disabled = true; }
+  if(submitBtn){ submitBtn.innerHTML = '<i class="ti ti-loader" style="vertical-align:-2px;margin-right:4px"></i>Saving to Register...'; submitBtn.disabled = true; }
 
-  fetch(POWER_AUTOMATE_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
+  const params = new URLSearchParams(payload);
+  fetch(APPS_SCRIPT_URL + "?" + params.toString(), { method: "GET", mode: "no-cors" })
+  .then(() => {
+    if(submitBtn){ submitBtn.innerHTML = '<i class="ti ti-send" style="vertical-align:-2px;margin-right:4px"></i>Submit & Generate Report'; submitBtn.disabled = false; }
+    console.log("Data sent to Google Sheets");
   })
-  .then(res => {
-    console.log("Power Automate response:", res.status);
-    if(submitBtn){ submitBtn.textContent = "Submit & Generate Report"; submitBtn.disabled = false; }
-  })
-  .catch(err => {
-    console.log("Power Automate note:", err);
-    if(submitBtn){ submitBtn.textContent = "Submit & Generate Report"; submitBtn.disabled = false; }
+  .catch(() => {
+    if(submitBtn){ submitBtn.innerHTML = '<i class="ti ti-send" style="vertical-align:-2px;margin-right:4px"></i>Submit & Generate Report'; submitBtn.disabled = false; }
   });
 
-  // Switch pages regardless of network result
+  // Switch pages immediately
   document.getElementById("assessment-page").classList.remove("active");
   document.getElementById("results-page").classList.add("active");
   window.scrollTo(0,0);
