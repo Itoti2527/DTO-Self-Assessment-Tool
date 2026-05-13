@@ -645,15 +645,14 @@ function submitAssessment(){
   const submitBtn = document.querySelector(".btn-primary");
   if(submitBtn){ submitBtn.innerHTML = '<i class="ti ti-loader" style="vertical-align:-2px;margin-right:4px"></i>Saving to Register...'; submitBtn.disabled = true; }
 
+  // Use image ping — bypasses CORS completely
   const params = new URLSearchParams(payload);
-  fetch(APPS_SCRIPT_URL + "?" + params.toString(), { method: "GET", mode: "no-cors" })
-  .then(() => {
+  const img = new Image();
+  img.src = APPS_SCRIPT_URL + "?" + params.toString();
+  img.onload = img.onerror = () => {
     if(submitBtn){ submitBtn.innerHTML = '<i class="ti ti-send" style="vertical-align:-2px;margin-right:4px"></i>Submit & Generate Report'; submitBtn.disabled = false; }
     console.log("Data sent to Google Sheets");
-  })
-  .catch(() => {
-    if(submitBtn){ submitBtn.innerHTML = '<i class="ti ti-send" style="vertical-align:-2px;margin-right:4px"></i>Submit & Generate Report'; submitBtn.disabled = false; }
-  });
+  };
 
   // Switch pages immediately
   document.getElementById("assessment-page").classList.remove("active");
